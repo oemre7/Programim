@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no"/>
+  <title>Kazanım Takvimi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800;900&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="Kazanım"/>
+  <meta name="theme-color" content="#020b1e"/>
+  <style>
+/* ════════════════════════════════════════════════════
+   RESET & TOKENS
+════════════════════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+
+:root{
+  /* iPhone 14 Pro Max safe areas */
+  --sat: env(safe-area-inset-top,    47px);
+  --sab: env(safe-area-inset-bottom, 34px);
+  --sal: env(safe-area-inset-left,    0px);
+  --sar: env(safe-area-inset-right,   0px);
+
+  /* Colours */
+  --bg:         #020b1e;
+  --bg2:        #051228;
+  --bg3:        #081a38;
+  --card:       #0a1f42;
+  --sheet-bg:   #071630;
+  --border:     #152e5e;
+  --border-hi:  #1e4a96;
+  --text:       #e8f1ff;
+  --muted:      #6888b0;
+  --accent:     #3b82f6;
+  --accent2:    #60a5fa;
+  --accent3:    #93c5fd;
+  --teal:       #22d3ee;
+  --green:      #34d399;
+  --warn:       #fbbf24;
+  --today-bg:   #1d4ed8;
+  --lesson-bg:  #0f2a5c;
+  --lesson-bdr: #1e4a96;
+
+  /* Sizes */
+  --header-h: calc(var(--sat) + 56px);
+  --footer-h: calc(var(--sab) + 48px);
+  --cal-side-pad: 14px;
+}
+
+html{height:100%;overflow:hidden;background:var(--bg);}
+body{
+  height:100%;height:100dvh;
+  overflow:hidden;
+  font-family:'Nunito',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  -webkit-font-smoothing:antialiased;
+  overscroll-behavior:none;
+}
+
+/* ════════════════════════════════════════════════════
+   APP SHELL — Fixed full-screen columns
+════════════════════════════════════════════════════ */
+.app{
+  position:fixed;inset:0;
+  display:flex;flex-direction:column;
+  background:var(--bg);
+  background-image:
+    radial-gradient(ellipse 100% 45% at 50% -5%, rgba(29,78,216,.28) 0%, transparent 65%),
+    radial-gradient(ellipse 70% 35% at 90% 95%,  rgba(6,182,212,.08) 0%, transparent 60%);
+}
+
+/* ════════════════════════════════════════════════════
+   HEADER
+════════════════════════════════════════════════════ */
+.app-header{
+  flex-shrink:0;
+  height: var(--header-h);
+  padding: var(--sat) var(--cal-side-pad) 0;
+  background: linear-gradient(180deg, #0a1e48 0%, #061535 100%);
+  border-bottom:1px solid var(--border-hi);
+  box-shadow:0 2px 20px rgba(0,0,0,.6);
+  display:flex;align-items:flex-end;justify-content:space-between;
+  gap:10px;
+  padding-bottom:10px;
+  z-index:20;
+}
+.header-left{display:flex;align-items:center;gap:10px;}
+.logo-icon{
+  width:32px;height:32px;
+  background:linear-gradient(135deg,#2563eb,#06b6d4);
+  border-radius:9px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:15px;
+  box-shadow:0 0 14px rgba(37,99,235,.55);
+  flex-shrink:0;
+}
+.header-title{
+  font-family:'Sora',sans-serif;
+  line-height:1.25;
+}
+.header-title .t1{font-size:11px;color:var(--muted);font-weight:600;}
+.header-title .t2{font-size:15px;font-weight:800;color:var(--text);}
+.header-title .t2 span{color:var(--accent2);}
+.header-badge{
+  font-size:10px;font-weight:700;
+  background:rgba(59,130,246,.15);
+  border:1px solid rgba(59,130,246,.3);
+  color:var(--accent3);
+  padding:4px 10px;border-radius:999px;
+  white-space:nowrap;
+}
+
+/* ════════════════════════════════════════════════════
+   CALENDAR CONTAINER — fills remaining height
+════════════════════════════════════════════════════ */
+.cal-container{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  padding: 0 var(--cal-side-pad);
+}
+
+/* Month navigator */
+.month-nav{
+  flex-shrink:0;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 0 10px;
+}
+.mnav-btn{
+  width:40px;height:40px;
+  border:none;
+  background:var(--bg3);
+  border:1px solid var(--border);
+  color:var(--text);
+  border-radius:12px;
+  font-size:20px;line-height:1;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:.12s background,.12s border-color;
+  -webkit-user-select:none;user-select:none;
+}
+.mnav-btn:active{background:var(--lesson-bg);border-color:var(--accent);transform:scale(.93);}
+.month-label{
+  font-family:'Sora',sans-serif;
+  font-size:19px;font-weight:800;
+  background:linear-gradient(90deg,#93c5fd,#38bdf8,#67e8f9);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+  letter-spacing:-.3px;
+}
+.month-label .year{font-size:14px;opacity:.7;margin-left:4px;}
+
+/* Day-of-week row */
+.dow-row{
+  flex-shrink:0;
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  margin-bottom:5px;
+}
+.dow-cell{
+  text-align:center;
+  font-size:10.5px;font-weight:800;
+  color:var(--muted);
+  padding:3px 0;
+  text-transform:uppercase;letter-spacing:.4px;
+}
+.dow-cell.wknd{color:rgba(96,165,250,.45);}
+
+/* Calendar grid — fills ALL available space */
+.cal-grid{
+  flex:1;
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  grid-template-rows:repeat(6,1fr);
+  gap:3px;
+  /* prevents overflow */
+  min-height:0;
+}
+
+/* Day cell */
+.cal-day{
+  border-radius:11px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  border:1px solid transparent;
+  gap:2px;
+  position:relative;
+  transition:.12s transform,.12s background,.12s border-color;
+  -webkit-user-select:none;user-select:none;
+  overflow:hidden;
+  /* fill grid row */
+  min-height:0;
+}
+.cal-day:active{transform:scale(.87);}
+.cal-day.empty{pointer-events:none;opacity:.2;}
+
+.cal-day.has-lesson{
+  background:var(--lesson-bg);
+  border-color:var(--lesson-bdr);
+}
+.cal-day.has-lesson:active{
+  background:#163572;border-color:var(--accent);
+}
+.cal-day.selected{
+  background:rgba(37,99,235,.4) !important;
+  border-color:var(--accent) !important;
+  box-shadow:0 0 0 2px rgba(59,130,246,.35);
+}
+
+/* Today highlight */
+.cal-day.today .day-num{
+  background:var(--today-bg);
+  color:#fff;
+  border-radius:50%;
+  width:28px;height:28px;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:900;
+  box-shadow:0 0 12px rgba(29,78,216,.7);
+}
+
+.day-num{
+  font-size:14px;font-weight:700;
+  line-height:1;color:var(--text);
+  /* when today, the span wraps it */
+}
+.cal-day.other-month .day-num{color:rgba(104,136,176,.28);}
+.cal-day.wknd .day-num{color:rgba(96,165,250,.65);}
+
+/* Lesson dots */
+.ldots{
+  display:flex;gap:2px;justify-content:center;
+  flex-wrap:nowrap;
+  padding:0 3px;
+}
+.ldot{
+  width:4px;height:4px;border-radius:50%;flex-shrink:0;
+}
+.ldot.c0{background:var(--accent2);}
+.ldot.c1{background:var(--teal);}
+.ldot.c2{background:var(--green);}
+.ldot.c3{background:var(--warn);}
+
+/* ════════════════════════════════════════════════════
+   FOOTER BAR
+════════════════════════════════════════════════════ */
+.app-footer{
+  flex-shrink:0;
+  height:var(--footer-h);
+  padding:0 16px var(--sab);
+  border-top:1px solid var(--border);
+  background: linear-gradient(180deg, #051228 0%, #020b1e 100%);
+  display:flex;align-items:center;justify-content:center;
+}
+.footer-txt{
+  font-family:'Sora',sans-serif;
+  font-size:10.5px;font-weight:700;
+  color:var(--muted);
+  text-align:center;
+}
+.footer-txt strong{color:var(--accent2);}
+
+/* ════════════════════════════════════════════════════
+   BOTTOM SHEET
+════════════════════════════════════════════════════ */
+.backdrop{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,.55);
+  backdrop-filter:blur(4px);
+  -webkit-backdrop-filter:blur(4px);
+  z-index:50;
+  opacity:0;pointer-events:none;
+  transition:opacity .28s;
+}
+.backdrop.show{opacity:1;pointer-events:all;}
+
+.sheet{
+  position:fixed;
+  bottom:0;left:0;right:0;
+  z-index:60;
+  background:var(--sheet-bg);
+  border-top:1px solid var(--border-hi);
+  border-radius:22px 22px 0 0;
+  box-shadow:0 -10px 50px rgba(0,0,0,.7);
+  display:flex;flex-direction:column;
+  max-height:82dvh;
+  padding-bottom:var(--sab);
+  transform:translateY(100%);
+  transition:transform .34s cubic-bezier(.32,.72,0,1);
+  will-change:transform;
+}
+.sheet.open{transform:translateY(0);}
+
+/* Drag handle zone */
+.sheet-drag{
+  flex-shrink:0;
+  padding:10px 16px 4px;
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  cursor:grab;touch-action:none;
+}
+.drag-bar{
+  width:40px;height:4px;
+  background:rgba(255,255,255,.18);
+  border-radius:99px;
+}
+.sheet-day-title{
+  font-family:'Sora',sans-serif;
+  font-size:15px;font-weight:800;
+  color:var(--accent2);
+  text-align:center;
+}
+.sheet-day-sub{
+  font-size:11px;color:var(--muted);
+  margin-top:-4px;
+}
+
+/* Divider */
+.sheet-divider{
+  flex-shrink:0;
+  height:1px;background:var(--border);
+  margin:0 16px;
+}
+
+/* Scrollable lesson list */
+.sheet-scroll{
+  flex:1;overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  padding:10px 14px 10px;
+  overscroll-behavior:contain;
+}
+
+/* Empty state */
+.empty-day{
+  text-align:center;padding:32px 20px;color:var(--muted);
+}
+.empty-day .eico{font-size:36px;display:block;margin-bottom:8px;}
+.empty-day .etxt{font-size:13px;font-weight:700;}
+
+/* Lesson card */
+.lcard{
+  background:linear-gradient(145deg,#081835,#060e28);
+  border:1px solid var(--border);
+  border-radius:15px;
+  padding:12px 14px 12px 16px;
+  margin-bottom:9px;
+  cursor:pointer;
+  position:relative;overflow:hidden;
+  transition:.14s border-color,.14s background,.12s transform;
+}
+.lcard::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;
+  width:3px;
+  background:linear-gradient(180deg,#3b82f6,#06b6d4);
+  border-radius:3px 0 0 3px;
+}
+.lcard:active{transform:scale(.97);}
+.lcard.active{
+  border-color:var(--accent);
+  background:linear-gradient(145deg,#0c2254,#091b44);
+  box-shadow:0 0 0 1px rgba(59,130,246,.2) inset;
+}
+.lc-row1{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
+.lc-name{font-size:13.5px;font-weight:800;line-height:1.35;flex:1;}
+.lc-time{
+  font-size:10.5px;font-weight:700;
+  background:rgba(37,99,235,.2);
+  border:1px solid rgba(59,130,246,.28);
+  color:var(--accent3);
+  padding:3px 9px;border-radius:999px;
+  white-space:nowrap;flex-shrink:0;
+}
+.lc-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px;}
+.lc-tag{
+  font-size:11px;color:var(--muted);
+  background:rgba(255,255,255,.04);
+  border:1px solid var(--border);
+  padding:2px 8px;border-radius:6px;
+}
+.lc-warn{font-size:11px;color:var(--warn);margin-top:5px;}
+
+/* Kazanım detail (expands below card) */
+.kbox{
+  background:linear-gradient(145deg,#040d22,#060f28);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:13px 14px;
+  margin:-4px 0 9px;
+  animation:kslide .22s ease;
+}
+@keyframes kslide{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
+.krow{margin-bottom:10px;}
+.krow:last-child{margin-bottom:0;}
+.klabel{
+  font-size:9.5px;font-weight:800;
+  color:var(--teal);
+  text-transform:uppercase;letter-spacing:1.1px;
+  margin-bottom:4px;
+}
+.kval{font-size:12.5px;line-height:1.75;white-space:pre-line;color:var(--text);}
+.kwarn{font-size:12.5px;color:var(--warn);}
+
+/* ════════════════════════════════════════════════════
+   DESKTOP OVERRIDE (≥ 700px)
+════════════════════════════════════════════════════ */
+@media(min-width:700px){
+  :root{--cal-side-pad:24px;}
+  .month-label{font-size:22px;}
+  .day-num{font-size:16px;}
+  .dow-cell{font-size:12px;}
+  .cal-day{border-radius:14px;}
+  .cal-day.today .day-num{width:32px;height:32px;}
+}
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ── HEADER ── -->
+  <header class="app-header">
+    <div class="header-left">
+      <div class="logo-icon">📐</div>
+      <div class="header-title">
+        <div class="t1">Ders Programı</div>
+        <div class="t2">Kazanım <span>Takvimi</span></div>
+      </div>
+    </div>
+    <div class="header-badge">2025 – 2026</div>
+  </header>
+
+  <!-- ── CALENDAR ── -->
+  <div class="cal-container">
+
+    <div class="month-nav">
+      <button class="mnav-btn" id="prevMonth">‹</button>
+      <div class="month-label" id="monthLabel"></div>
+      <button class="mnav-btn" id="nextMonth">›</button>
+    </div>
+
+    <div class="dow-row">
+      <div class="dow-cell">Pzt</div>
+      <div class="dow-cell">Sal</div>
+      <div class="dow-cell">Çar</div>
+      <div class="dow-cell">Per</div>
+      <div class="dow-cell">Cum</div>
+      <div class="dow-cell wknd">Cmt</div>
+      <div class="dow-cell wknd">Paz</div>
+    </div>
+
+    <div class="cal-grid" id="calGrid"></div>
+
+  </div>
+
+  <!-- ── FOOTER ── -->
+  <footer class="app-footer">
+    <div class="footer-txt">✦ <strong>Orhan Emre Torun</strong> · Matematik Öğretmeni ✦</div>
+  </footer>
+
+</div><!-- /app -->
+
+<!-- BACKDROP -->
+<div class="backdrop" id="backdrop"></div>
+
+<!-- BOTTOM SHEET -->
+<div class="sheet" id="sheet">
+  <div class="sheet-drag" id="sheetDrag">
+    <div class="drag-bar"></div>
+    <div class="sheet-day-title" id="sheetTitle"></div>
+    <div class="sheet-day-sub"  id="sheetSub"></div>
+  </div>
+  <div class="sheet-divider"></div>
+  <div class="sheet-scroll" id="sheetScroll"></div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════
+   APP DATA
+══════════════════════════════════════════════ */
+const APP_DATA = {"schedule": [{"day": "Salı", "weekday": 2, "slot": "3. Ders", "time": "18:00-18:40", "lesson": "PROBLEM ÇÖZME TEKNİKLERİ ATÖLYESİ", "group": "PROJE/2", "room": "ATÖLYE-MAT-A1", "raw": "18:00-18:40PROBLEM ÇÖZME TEKNİKLERİ ATÖLYESİPROJE/2Atölye-MAT-A1"}, {"day": "Perşembe", "weekday": 4, "slot": "3. Ders", "time": "18:00-18:40", "lesson": "MATEMATİK", "group": "", "room": "MAT-A1", "raw": "18:00-18:40MATEMATİKP2/4-MAT-A1"}, {"day": "Cuma", "weekday": 5, "slot": "3. Ders", "time": "18:00-18:40", "lesson": "İSTATİSTİK ATÖLYESİ", "group": "PROJE/5", "room": "ATÖLYE-MAT-A4", "raw": "18:00-18:40İSTATİSTİK I ATÖLYESİPROJE/5Atölye-MAT-A4"}, {"day": "Cumartesi", "weekday": 6, "slot": "3. Ders", "time": "Saat belirtilmemiş", "lesson": "MATEMATİK OLİMPİYATLARINA HAZIRLIK ATÖLYESİ", "group": "ÖYGP/", "room": "", "raw": "-MATEMATİK OLİMPİYATLARINA HAZIRLIK I ATÖLYESİÖYGP/Atölye-6MAT-Ö5"}, {"day": "Salı", "weekday": 2, "slot": "4. Ders", "time": "18:50-19:30", "lesson": "PROBLEM ÇÖZME TEKNİKLERİ ATÖLYESİ", "group": "PROJE/2", "room": "ATÖLYE-MAT-A1", "raw": "18:50-19:30PROBLEM ÇÖZME TEKNİKLERİ ATÖLYESİPROJE/2Atölye-MAT-A1"}, {"day": "Perşembe", "weekday": 4, "slot": "4. Ders", "time": "18:50-19:30", "lesson": "MATEMATİK", "group": "", "room": "MAT-A1", "raw": "18:50-19:30MATEMATİKP2/4-MAT-A1"}, {"day": "Cuma", "weekday": 5, "slot": "4. Ders", "time": "18:50-19:30", "lesson": "İSTATİSTİK ATÖLYESİ", "group": "PROJE/5", "room": "ATÖLYE-MAT-A4", "raw": "18:50-19:30İSTATİSTİK I ATÖLYESİPROJE/5Atölye-MAT-A4"}, {"day": "Cumartesi", "weekday": 6, "slot": "4. Ders", "time": "Saat belirtilmemiş", "lesson": "MATEMATİK OLİMPİYATLARINA HAZIRLIK ATÖLYESİ", "group": "ÖYGP/", "room": "", "raw": "-MATEMATİK OLİMPİYATLARINA HAZIRLIK I ATÖLYESİÖYGP/Atölye-6MAT-Ö5"}, {"day": "Salı", "weekday": 2, "slot": "5. Ders", "time": "19:40-20:20", "lesson": "MATEMATİK", "group": "", "room": "MAT-A2", "raw": "19:40-20:20MATEMATİKP1/2-MAT-A2"}, {"day": "Perşembe", "weekday": 4, "slot": "5. Ders", "time": "19:40-20:20", "lesson": "İSTATİSTİK ATÖLYESİ", "group": "PROJE/4", "room": "ATÖLYE-MAT-A2", "raw": "19:40-20:20İSTATİSTİK I ATÖLYESİPROJE/4Atölye-MAT-A2"}, {"day": "Cuma", "weekday": 5, "slot": "5. Ders", "time": "19:40-20:20", "lesson": "BİLİMSEL ARAŞTIRMA YÖNTEMLERİ", "group": "PROJE/5", "room": "ATÖLYE-MAT-A4", "raw": "19:40-20:20BİLİMSEL ARAŞTIRMA TEKNİKLERİ I ATÖLYESİPROJE/5Atölye-MAT-A4"}, {"day": "Salı", "weekday": 2, "slot": "6. Ders", "time": "20:30-21:10", "lesson": "MATEMATİK", "group": "", "room": "MAT-A2", "raw": "20:30-21:10MATEMATİKP1/2-MAT-A2"}, {"day": "Perşembe", "weekday": 4, "slot": "6. Ders", "time": "20:30-21:10", "lesson": "İSTATİSTİK ATÖLYESİ", "group": "PROJE/4", "room": "ATÖLYE-MAT-A2", "raw": "20:30-21:10İSTATİSTİK I ATÖLYESİPROJE/4Atölye-MAT-A2"}, {"day": "Cuma", "weekday": 5, "slot": "6. Ders", "time": "20:30-21:10", "lesson": "BİLİMSEL ARAŞTIRMA YÖNTEMLERİ", "group": "PROJE/5", "room": "ATÖLYE-MAT-A4", "raw": "20:30-21:10BİLİMSEL ARAŞTIRMA TEKNİKLERİ I ATÖLYESİPROJE/5Atölye-MAT-A4"}], "plans": {"PROBLEM ÇÖZME TEKNİKLERİ ATÖLYESİ": {"type": "relative", "startDate": "2026-02-02", "weeks": [{"week": 1, "content": "Problemin ve problem durumunun ne olduğunun açıklanması.\nProblem çözme sürecine dair genel bilgilendirmelerin yapılması.\nProblem çözme basamaklarının açıklanması."}, {"week": 2, "content": "Problem çözme stratejilerini incelenmesi."}, {"week": 3, "content": "Bir problemin çözümünde sistematik liste yapma stratejisinin uygulanması.\nBir problemin çözümünde tahmin ve kontrol stratejisinin uygulanması."}, {"week": 4, "content": "Bir problemin çözümünde diyagram çizme stratejisinin uygulanması.\nBir problemin çözümünde bağıntı bulma (veriler arasında ilişki arama) stratejisinin uygulanması."}, {"week": 5, "content": "Bir problemin çözümünde eşitlik yazma stratejisinin uygulanması."}, {"week": 6, "content": "Bir problemin çözümünde benzer basit problemlerin çözümünden faydalanma stratejisinin uygulanması.\nBir problemin çözümünde geriye doğru çalışma stratejisinin uygulanması."}, {"week": 7, "content": "Bir problemin çözümünde tablo yapma stratejisinin uygulanması."}, {"week": 8, "content": "Problem türlerinin tanıtılması."}, {"week": 9, "content": "Rutin problemler-ifadeyi dönüştürme problemi uygulamalarının yapılması."}, {"week": 10, "content": "Rutin olmayan problemler-gerçek hayat problemleri uygulamalarının yapılması."}, {"week": 11, "content": "Rutin olmayan problemler-gerçek hayat problemleri uygulamalarının yapılması."}, {"week": 12, "content": "Rutin olmayan problemler-süreç problemleri uygulamalarının yapılması."}, {"week": 13, "content": "Toplumsal problemlere yaratıcı ve eleştirel çözümler üretilmesi.\nProblemin çözümünde soyut düşünebilme çalışmalarının yapılması.\nProblem çözme tekniklerini açıklanması."}, {"week": 14, "content": "Toplumsal bir problem çözümünde beyin fırtınası tekniğini kullanılması."}, {"week": 15, "content": "Toplumsal bir problem çözümünde çoklu oylama tekniğini kullanılması."}, {"week": 16, "content": "Toplumsal bir problem çözümünde nominal grup tekniğini kullanılması."}, {"week": 17, "content": "Toplumsal bir problem çözümünde akış şeması tekniğini kullanılması."}, {"week": 18, "content": "Toplumsal bir problem çözümünde sebep –sonuç (Balık kılçığı) diyagramınının kullanılması."}]}, "İSTATİSTİK ATÖLYESİ": {"type": "relative", "startDate": "2026-02-02", "weeks": [{"week": 1, "content": "Saymanın temel ilkesinin açıklanması."}, {"week": 2, "content": "Permütasyon kavramının açıklanması."}, {"week": 3, "content": "Kombinasyon kavramının açıklanması."}, {"week": 4, "content": "Örnek uzay, olayların açıklanması."}, {"week": 5, "content": "Olasılık ve olasılık aksiyomlarının açıklanması."}, {"week": 6, "content": "Bağımlı – bağımsız olayların açıklanması."}, {"week": 7, "content": "Koşullu olasılık ve Bayes Formülü’nün açıklanması."}, {"week": 8, "content": "Rassal değişkenlerin ve dağılımlarının yorumlanması.\nKesikli rastgele değişkenlerin karşılaştırılması.\nKesikli rastgele değişkenlerin beklenen değerinin hesaplanması.\nKesikli rastgele değişkenlerin varyansının hesaplanması.\nKesikli rastgele değişkenlerin standart sapmasının hesaplanması."}, {"week": 9, "content": "Poisson dağılımının araştırılması.\nNormal dağılımın araştırılması.\nBinom dağılımının yapılması.\nGeometrik dağılımın yapılması."}, {"week": 10, "content": "Sürekli rastgele değişkenlerin incelenmesi.\nSürekli rastgele değişkenler için beklenen değerin hesaplanması.\nSürekli rastgele değişkenler için Varyansın hesaplanması.\nSürekli rastgele değişkenler için standart sapmanın hesaplanması."}, {"week": 11, "content": "Sürekli rastgele değişkenlerin incelenmesi.\nNormal ve standart dağılımların karşılaştırılması."}, {"week": 12, "content": "Koşullu olasılık ve beklenen değer kavramlarının açıklanması."}, {"week": 13, "content": "İstatistik ve Araştırma\nİstatistiğe ilişkin temel kavramların açıklanması."}, {"week": 14, "content": "Frekans dağılımlarının incelenmesi.\nFrekans dağılımlarının tablo ile gösterilmesi\nVerilerin grafik ile gösterilmesi\nMerkezi eğilim ve değişkenlik ölçülerinin incelenmesi."}, {"week": 15, "content": "Frekans dağılımlarının betimlenmesi.\nMerkezi eğilim ölçülerinin açıklanması.\nDeğişkenlik ölçülerinin açıklanması."}, {"week": 16, "content": "Standart normal dağılımın açıklanması.\nStandart puanların açıklanması."}, {"week": 17, "content": "Korelasyon\nSaçılma diyagramının açıklanması.\nKorelasyon katsayısının hesaplanması.\nKi-kare testinin yapılması."}, {"week": 18, "content": "Basit doğrusal regresyon analizi\nEn küçük kareler yönteminin tahmincilerinin özelliklerini açıklanması.\nBasit doğrusal regresyon eşitliği ve işlemlerinin yapılması.\nTahminin Standart Hatasının yorumlanması."}]}, "BİLİMSEL ARAŞTIRMA YÖNTEMLERİ": {"type": "relative", "startDate": "2026-02-02", "weeks": [{"week": 1, "content": "Bilim, bilgi ve bilimsel bilgi kavramlarının açıklanması.\nBilimsel yöntemlerin açıklanması."}, {"week": 2, "content": "Bilimsel araştırma yöntemlerinin karşılaştırılması."}, {"week": 3, "content": "Bilgi edinme yollarının açıklanması.\nBilimsel bilgi kavramının açıklanması."}, {"week": 4, "content": "Bilimsel araştırmanın amaçları ve özelliklerinin incelenmesi."}, {"week": 5, "content": "Bilimsel araştırmalarda nicel yaklaşımlarının araştırılması."}, {"week": 6, "content": "Bilimsel araştırmalarda nitel yaklaşımların araştırılması."}, {"week": 7, "content": "Bilimsel tutum ve davranışların açıklanması."}, {"week": 8, "content": "Bilimsel araştırmada etik ilkelerinin açıklanması."}, {"week": 9, "content": "Bilimsel araştırmada geçerlik ve güvenirliğin açıklanması."}, {"week": 10, "content": "Bilimsel araştırma basamaklarının açıklanması."}, {"week": 11, "content": "Problem durumunun belirlenmesi."}, {"week": 12, "content": "Belirlenen problem durumuna uygun literatür taraması yapılması."}, {"week": 13, "content": "Kaynakların okunması ve özetlenmesi."}, {"week": 14, "content": "Kaynakların okunması ve özetlenmesi."}, {"week": 15, "content": "Kaynakların okunması ve özetlenmesi."}, {"week": 16, "content": "Araştırma değişkenlerinin belirlenmesi."}, {"week": 17, "content": "Araştırma değişkenlerinin belirlenmesi."}, {"week": 18, "content": "Örneklem belirleme yönteminin belirlenmesi."}, {"week": 19, "content": "Örneklemin seçilmesi."}, {"week": 20, "content": "Veri toplama ve analiz yöntemlerinin belirlenmesi."}, {"week": 21, "content": "Verilerin toplanması."}, {"week": 22, "content": "Verilerin toplanması."}, {"week": 23, "content": "Verilerin toplanması."}, {"week": 24, "content": "Verilerin analiz edilmesi."}, {"week": 25, "content": "Verilerin analiz edilmesi."}, {"week": 26, "content": "Bulguların yorumlanması."}, {"week": 27, "content": "Araştırma raporunun hazırlanması."}, {"week": 28, "content": "Araştırma raporunun hazırlanması."}, {"week": 29, "content": "İlgili proje yarışmalarına başvuru yapılması."}, {"week": 30, "content": "Hazırlanan araştırma raporuna uygun sunum hazırlanması (afiş, broşür, sunu vb.)."}, {"week": 31, "content": "Hazırlanan araştırma raporuna uygun sunum hazırlanması (afiş, broşür, sunu vb.)."}, {"week": 32, "content": "Araştırma bulgularının başka benzer araştırmaların bulgularıyla kıyaslanması ve çıkarımlarda bulunulması."}, {"week": 33, "content": "Araştırma bulgularının başka benzer araştırmaların bulgularıyla kıyaslanması ve çıkarımlarda bulunulması."}, {"week": 34, "content": "Araştırmanın bütün inceleme/ uygulama/ gözlem/ istatistik sonuçlarının değerlendirilmesi."}, {"week": 35, "content": "Araştırmanın bütün inceleme/ uygulama/ gözlem/ istatistik sonuçlarının değerlendirilmesi."}, {"week": 36, "content": "Proje çalışmasının tartışılması ve değerlendirilmesi."}]}, "MATEMATİK OLİMPİYATLARINA HAZIRLIK ATÖLYESİ": {"type": "relative", "startDate": "2026-02-02", "weeks": [{"week": 1, "content": "Temel sayma kurallarının açıklanması."}, {"week": 2, "content": "Permütasyon ve kombinasyon hesaplarının yapılması."}, {"week": 3, "content": "Birbirinden farklı olmayan nesnelerin sıralamalarının, parçalanmaların yapılması."}, {"week": 4, "content": "Dağılışlar, örnek seçimi, içerme ve dışlama prensibinin açıklanması."}, {"week": 5, "content": "x1+x2………+xn=k denkleminin pozitif tam /doğal sayılar kümesinde çözümlerinin yapılması."}, {"week": 6, "content": "İndirgenme bağıntıları, değişmezlik ilkesinin incelenmesi."}, {"week": 7, "content": "Sayma ve olasılık problemlerinin çözülmesi."}, {"week": 8, "content": "Sayma ve olasılık problemlerinin çözülmesi."}, {"week": 9, "content": "Asal Sayılar, bölme ve bölünebilme, asal çarpanlarına ayırma ile ilgili hesaplamaların yapılması."}, {"week": 10, "content": "Asal Sayılar, bölme ve bölünebilme, asal çarpanlarına ayırma ile ilgili hesaplamaların yapılması."}, {"week": 11, "content": "Obeb-Okek ile ilgili hesaplamaların yapılması.\nTaban Aritmetiği ile ilgili hesaplamaların yapılması.\nÇözümleme, rakam değiştirme veya silme uygulamalarının yapılması."}, {"week": 12, "content": "Modüler aritmetik uygulamalarının yapılması."}, {"week": 13, "content": "Modüler aritmetik uygulamalarının yapılması."}, {"week": 14, "content": "Euler Phi fonksiyonun özellikleri, Fermat teoremi ve uygulamaları, Wilson teoremi ve uygulamalarının yapılması"}, {"week": 15, "content": "Çin kalan teoreminin açıklanması."}, {"week": 16, "content": "Denkliklerin incelenmesi."}, {"week": 17, "content": "Denklemlerin incelenmesi."}, {"week": 18, "content": "Basit denklem özellikleri ve sayıların kullanılması"}, {"week": 19, "content": "Pergel ve cetvelle temel geometrik çizimlerin yapılması.\nÜçgende açılar ile ilgili kuralların incelenmesi."}, {"week": 20, "content": "Üçgenin yardımcı elamanları, özel üçgenlerin açıklanması.\nÜçgenin çemberlerinin açıklanması."}, {"week": 21, "content": "Üçgende eşlik benzerlik kurallarının hesaplanması."}, {"week": 22, "content": "Sentetik geometri uygulamalarının yapılması."}, {"week": 23, "content": "Üçgende alan uygulamalarının yapılması."}, {"week": 24, "content": "Dörtgenler ve özelliklerinin açıklanması"}, {"week": 25, "content": "Dörtgenlerde alan uygulamalarının yapılması."}, {"week": 26, "content": "Çemberlerin özelliklerinin açıklanması."}, {"week": 27, "content": "Çemberlerin özelliklerinin açıklanması."}, {"week": 28, "content": "Ortalamaların hesaplanması."}, {"week": 29, "content": "Ortalamaların hesaplanması."}, {"week": 30, "content": "Fonksiyonların özelliklerinin açıklanması."}, {"week": 31, "content": "Polinomların özelliklerinin açıklanması."}, {"week": 32, "content": "Dizilerin açıklanması."}, {"week": 33, "content": "Karesel- aritmetik- geometrik- harmonik ortalama eşitsizliği kavramlarının açıklanması."}, {"week": 34, "content": "Cauchy-Schwarz eşitsizliğinin açıklanması."}, {"week": 35, "content": "İkinci dereceden denklemler, denklemler ve denklem sistemleri, fonksiyonel denklemlerin açıklanması."}, {"week": 36, "content": "Genel değerlendirme yapılması."}]}, "MATEMATİK": {"type": "dated", "weeks": [{"dateRange": "02-08.02.2026", "gain": "MAT.PÜY.3.3 Matematiğin farklı alanlarını içeren seçkin bilimsel çalışmaları yorumlayabilme", "module": "3. MATEMATİK YAPMA", "activity": "Bilimsel araştırma"}, {"dateRange": "19-15.02.2026", "gain": "MAT.PÜY.3.3 Matematiğin farklı alanlarını içeren seçkin bilimsel çalışmaları yorumlayabilme", "module": "3. MATEMATİK YAPMA", "activity": "Bilimsel araştırma"}, {"dateRange": "16-22.02.2026", "gain": "MAT.PÜY.4.1 Etik ve bilimsel etik kurallarını sorgulayabilme", "module": "4. BİLİMSEL ETİK", "activity": "Bilimsel Etik, Tasarım"}, {"dateRange": "16-22.02.2026", "gain": "MAT.PÜY.4.1 Etik ve bilimsel etik kurallarını sorgulayabilme", "module": "4. BİLİMSEL ETİK", "activity": "Patent, Faydalı model"}, {"dateRange": "02-08.03.2026", "gain": "MAT.PÜY.5.1 Bir matematiksel araştırmanın konusuna karar verebilme", "module": "5. MATEMATİKSEL ARAŞTIRMA YAPMA", "activity": "Önerme, Aksiyom, Teorem, İspat"}, {"dateRange": "09-15.03.2026", "gain": "MAT.PÜY.5.1 Bir matematiksel araştırmanın konusuna karar verebilme", "module": "5. MATEMATİKSEL ARAŞTIRMA YAPMA", "activity": "Önerme, Aksiyom, Teorem, İspat"}, {"dateRange": "16-22.03.2026", "gain": "II. Dönem Ara Tatili", "module": "", "activity": ""}, {"dateRange": "23-29.03.2026", "gain": "MAT.PÜY.5.2 Araştırma konusunun gerektirdiği becerileri (sorgulama, muhakeme, problem çözme gibi) kullanarak problemi çözebilme", "module": "5. MATEMATİKSEL ARAŞTIRMA YAPMA", "activity": "Önerme, Aksiyom, Teorem, İspat"}, {"dateRange": "30.03-5.04.2026", "gain": "MAT.PÜY.5.1 Bir matematiksel araştırmanın konusuna karar verebilme", "module": "5. MATEMATİKSEL ARAŞTIRMA YAPMA", "activity": "Önerme, Aksiyom, Teorem, İspat"}, {"dateRange": "6-12.04.2026", "gain": "MAT.PÜY.5.2 Araştırma konusunun gerektirdiği becerileri (sorgulama, muhakeme, problem çözme gibi) kullanarak problemi çözebilme", "module": "5. MATEMATİKSEL ARAŞTIRMA YAPMA", "activity": "Matematiksel araç ve teknoloji"}, {"dateRange": "13-19.04.2026", "gain": "MAT.PÜY.5.2 Araştırma konusunun gerektirdiği becerileri (sorgulama, muhakeme, problem çözme gibi) kullanarak problemi çözebilme", "module": "5. MATEMATİKSEL ARAŞTIRMA YAPMA", "activity": "Matematiksel araç ve teknoloji"}, {"dateRange": "20-26.04.2026", "gain": "MAT.PÜY.5.2 Araştırma konusunun gerektirdiği becerileri (sorgulama, muhakeme, problem çözme gibi) kullanarak problemi çözebilme", "module": "5. MATEMATİKSEL ARAŞTIRMA YAPMA", "activity": "Matematiksel araç ve teknoloji"}, {"dateRange": "27.04-03.05.2026", "gain": "MAT.PÜY.5.3 Belirlenen araştırmasında kullanabileceği matematiksel araç ve teknolojiden yararlanabilme", "module": "5. MATEMATİKSEL ARAŞTIRMA YAPMA", "activity": "Matematiksel araç ve teknoloji"}, {"dateRange": "04-10.05.2026", "gain": "MAT.PÜY.5.3 Belirlenen araştırmasında kullanabileceği matematiksel araç ve teknolojiden yararlanabilme", "module": "5. MATEMATİKSEL ARAŞTIRMA YAPMA", "activity": "Matematiksel araç ve teknoloji"}, {"dateRange": "11-17.05.2026", "gain": "MAT.PÜY.5.3 Belirlenen araştırmasında kullanabileceği matematiksel araç ve teknolojiden yararlanabilme", "module": "5. MATEMATİKSEL ARAŞTIRMA YAPMA", "activity": "Matematiksel araç ve teknoloji"}, {"dateRange": "18-24.05.2026", "gain": "MAT.PÜY.6.1 Gerçekleştirdiği matematik araştırmasına uygun proje raporu veya bildiri veya makale gibi akademik yayın hazırlamak ve sunmak için matematiksel araç ve teknolojilerden yararlanabilme", "module": "6.  ÇIKTILAR VE YAYGIN ETKİLER", "activity": "Bilimsel Yayın"}, {"dateRange": "25-31.05.2026", "gain": "MAT.PÜY.6.1 Gerçekleştirdiği matematik araştırmasına uygun proje raporu veya bildiri veya makale gibi akademik yayın hazırlamak ve sunmak için matematiksel araç ve teknolojilerden yararlanabilme", "module": "6.  ÇIKTILAR VE YAYGIN ETKİLER", "activity": "LaTex"}, {"dateRange": "01-07.06.2026", "gain": "MAT.PÜY.6.1 Gerçekleştirdiği matematik araştırmasına uygun proje raporu veya bildiri veya makale gibi akademik yayın hazırlamak ve sunmak için matematiksel araç ve teknolojilerden yararlanabilme", "module": "6.  ÇIKTILAR VE YAYGIN ETKİLER", "activity": "MathType"}, {"dateRange": "08-14.06.2026", "gain": "MAT.PÜY.6.2 Gerçekleştirdiği matematik araştırmasına uygun fikrî ve sınai mülkiyet süreçlerini yürütebilme", "module": "6.  ÇIKTILAR VE YAYGIN ETKİLER", "activity": "Fikrî ve Sınai Mülkiyet"}, {"dateRange": "15-21.06.2026", "gain": "MAT.PÜY.6.2 Gerçekleştirdiği matematik araştırmasına uygun fikrî ve sınai mülkiyet süreçlerini yürütebilme", "module": "6.  ÇIKTILAR VE YAYGIN ETKİLER", "activity": "Fikrî ve Sınai Mülkiyet"}, {"dateRange": "15-21.06.2026", "gain": "ORHAN EMRE TORUN", "module": "", "activity": ""}, {"dateRange": "15-21.06.2026", "gain": "Matematik Öğretmeni", "module": "", "activity": ""}]}}, "meta": {"termStart": "2026-02-02"}};
+
+/* ══════════════════════════════════════════════
+   CONSTANTS
+══════════════════════════════════════════════ */
+const MONTHS = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+const DAYS   = ['Pazar','Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi'];
+const DOT_COLORS = ['c0','c1','c2','c3'];
+
+/* ══════════════════════════════════════════════
+   STATE
+══════════════════════════════════════════════ */
+let viewYear   = new Date().getFullYear();
+let viewMonth  = new Date().getMonth();
+let selISO     = null;
+let selLKey    = null;
+let sheetOpen  = false;
+let dragY0=0, dragDY=0, dragging=false;
+
+/* ══════════════════════════════════════════════
+   HELPERS
+══════════════════════════════════════════════ */
+const parseLocal = iso => { const [y,m,d]=iso.split('-').map(Number); return new Date(y,m-1,d); };
+const toISO      = d => d.toISOString().slice(0,10);
+const ymdISO     = (y,m,d) => `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+const todayISO   = () => toISO(new Date());
+const monBased   = iso => { const w=parseLocal(iso).getDay(); return w===0?7:w; }; // Mon=1..Sun=7
+const lessonKey  = x => `${x.lesson}|${x.group}|${x.room}|${x.slot}`;
+
+const getLessons = iso => {
+  const wd = monBased(iso);
+  return APP_DATA.schedule.filter(x => x.weekday === wd);
+};
+
+function startOfMon(iso){
+  const d=parseLocal(iso); const dw=d.getDay()||7; d.setDate(d.getDate()-dw+1); return d;
+}
+function weeksBetween(a,b){
+  return Math.floor((startOfMon(b)-startOfMon(a))/(1000*60*60*24*7));
+}
+
+function getPlan(item, iso){
+  const plan = APP_DATA.plans[item.lesson];
+  if(!plan) return {ok:false, msg:'Yıllık plan yüklenmemiş.'};
+  if(plan.type==='relative'){
+    const wi = weeksBetween(plan.startDate, iso);
+    if(wi<0) return {ok:false, msg:'Plan başlangıcından önce.'};
+    const wk = plan.weeks[wi];
+    if(!wk) return {ok:false, msg:'Bu hafta için içerik bulunamadı.'};
+    return {ok:true, label:`${wi+1}. Hafta`, content:wk.content};
+  }
+  if(plan.type==='dated'){
+    const tgt = parseLocal(iso);
+    for(const w of plan.weeks){
+      if(!w.dateRange) continue;
+      const m = w.dateRange.match(/(\d{1,2})\.?(\d{1,2})?-(\d{1,2})\.?(\d{1,2})?\.(\d{4})/);
+      if(m){
+        const sd=+m[1], sm=m[2]?+m[2]:+m[4], ed=+m[3], em=+m[4], yr=+m[5];
+        const s=new Date(yr,sm-1,sd), e=new Date(yr,em-1,ed);
+        if(tgt>=s&&tgt<=e) return {ok:true,label:w.dateRange,gain:w.gain,module:w.module,activity:w.activity};
+      }
+    }
+    return {ok:false, msg:'Bu tarihe uygun hafta bulunamadı.'};
+  }
+  return {ok:false, msg:'Plan okunamadı.'};
+}
+
+/* ══════════════════════════════════════════════
+   CALENDAR RENDER
+══════════════════════════════════════════════ */
+function renderCal(){
+  const grid  = document.getElementById('calGrid');
+  const label = document.getElementById('monthLabel');
+  const today = todayISO();
+
+  // Month label
+  label.innerHTML = `${MONTHS[viewMonth]} <span class="year">${viewYear}</span>`;
+
+  const firstDay   = new Date(viewYear, viewMonth, 1);
+  const firstDow   = firstDay.getDay() || 7;           // Mon=1
+  const daysInMo   = new Date(viewYear, viewMonth+1, 0).getDate();
+  const daysInPrev = new Date(viewYear, viewMonth,   0).getDate();
+
+  // Build 42 cells (6 rows × 7)
+  const cells = [];
+
+  // Leading prev-month cells
+  for(let i=firstDow-1; i>0; i--){
+    const d = daysInPrev - i + 1;
+    cells.push({ num:d, iso:ymdISO(viewYear, viewMonth-1, d), other:true });
+  }
+  // Current month
+  for(let d=1; d<=daysInMo; d++){
+    cells.push({ num:d, iso:ymdISO(viewYear, viewMonth, d), other:false });
+  }
+  // Trailing
+  let trail = 1;
+  while(cells.length < 42){
+    cells.push({ num:trail, iso:ymdISO(viewYear, viewMonth+1, trail), other:true });
+    trail++;
+  }
+
+  grid.innerHTML = '';
+
+  cells.forEach(({num, iso, other}) => {
+    const lessons = getLessons(iso);
+    const hasL    = lessons.length > 0;
+    const wd      = monBased(iso);
+    const isWknd  = wd >= 6;
+    const isToday = iso === today;
+    const isSel   = iso === selISO;
+
+    const el = document.createElement('div');
+    el.className = [
+      'cal-day',
+      other    ? 'empty'      : '',
+      hasL     ? 'has-lesson' : '',
+      isWknd   ? 'wknd'       : '',
+      isToday  ? 'today'      : '',
+      isSel    ? 'selected'   : '',
+    ].filter(Boolean).join(' ');
+
+    // Day number
+    const numEl = document.createElement('div');
+    numEl.className = 'day-num';
+    if(isToday){
+      const sp = document.createElement('span');
+      sp.textContent = num;
+      numEl.appendChild(sp);
+    } else {
+      numEl.textContent = num;
+    }
+    el.appendChild(numEl);
+
+    // Dots
+    if(hasL && !other){
+      const uniq = [...new Set(lessons.map(l=>l.lesson))];
+      const dotsEl = document.createElement('div');
+      dotsEl.className = 'ldots';
+      uniq.slice(0,4).forEach((_, i) => {
+        const dot = document.createElement('div');
+        dot.className = `ldot ${DOT_COLORS[i % DOT_COLORS.length]}`;
+        dotsEl.appendChild(dot);
+      });
+      el.appendChild(dotsEl);
+    }
+
+    if(!other){
+      el.addEventListener('click', () => onDayTap(iso));
+    }
+
+    grid.appendChild(el);
+  });
+}
+
+/* ══════════════════════════════════════════════
+   DAY TAP
+══════════════════════════════════════════════ */
+function onDayTap(iso){
+  selISO  = iso;
+  selLKey = null;
+  renderCal();
+
+  const d       = parseLocal(iso);
+  const lessons = getLessons(iso);
+  const dayName = DAYS[d.getDay()];
+  const dateTxt = `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+
+  document.getElementById('sheetTitle').textContent = dayName;
+  document.getElementById('sheetSub').textContent   = dateTxt;
+  buildSheetContent(iso, lessons);
+  openSheet();
+}
+
+/* ══════════════════════════════════════════════
+   SHEET CONTENT
+══════════════════════════════════════════════ */
+function buildSheetContent(iso, lessons){
+  const scroll = document.getElementById('sheetScroll');
+  scroll.innerHTML = '';
+
+  if(!lessons.length){
+    scroll.innerHTML = `
+      <div class="empty-day">
+        <span class="eico">😴</span>
+        <span class="etxt">Bu gün ders yok</span>
+      </div>`;
+    return;
+  }
+
+  lessons.forEach(item => {
+    const key    = lessonKey(item);
+    const hasPlan = !!APP_DATA.plans[item.lesson];
+    const isAct  = key === selLKey;
+
+    // Card
+    const card = document.createElement('div');
+    card.className = 'lcard' + (isAct ? ' active' : '');
+    card.innerHTML = `
+      <div class="lc-row1">
+        <div class="lc-name">${item.lesson}</div>
+        <div class="lc-time">${item.time}</div>
+      </div>
+      <div class="lc-tags">
+        <span class="lc-tag">${item.slot}</span>
+        ${item.group ? `<span class="lc-tag">${item.group}</span>` : ''}
+        ${item.room  ? `<span class="lc-tag">${item.room}</span>`  : ''}
+      </div>
+      ${!hasPlan ? '<div class="lc-warn">⚠ Yıllık plan yüklenmedi</div>' : ''}
+    `;
+    card.addEventListener('click', () => {
+      selLKey = isAct ? null : key;
+      buildSheetContent(iso, lessons);
+      // Scroll card into view
+      setTimeout(() => card.scrollIntoView({behavior:'smooth', block:'nearest'}), 60);
+    });
+    scroll.appendChild(card);
+
+    // Kazanım box (if active)
+    if(isAct){
+      const box = document.createElement('div');
+      box.className = 'kbox';
+      box.innerHTML = buildKazanim(item, iso);
+      scroll.appendChild(box);
+    }
+  });
+}
+
+function buildKazanim(item, iso){
+  const p = getPlan(item, iso);
+  if(!p.ok) return `<div class="krow"><div class="klabel">Durum</div><div class="kwarn">⚠ ${p.msg}</div></div>`;
+
+  if(item.lesson === 'MATEMATİK'){
+    return `
+      <div class="krow"><div class="klabel">Tarih Aralığı</div><div class="kval">${p.label}</div></div>
+      <div class="krow"><div class="klabel">Kazanım</div><div class="kval">${p.gain||'—'}</div></div>
+      <div class="krow"><div class="klabel">Modül</div><div class="kval">${p.module||'—'}</div></div>
+      <div class="krow"><div class="klabel">Etkinlik</div><div class="kval">${p.activity||'—'}</div></div>
+    `;
+  }
+  return `
+    <div class="krow"><div class="klabel">${p.label} — İçerik</div><div class="kval">${p.content}</div></div>
+  `;
+}
+
+/* ══════════════════════════════════════════════
+   SHEET OPEN / CLOSE
+══════════════════════════════════════════════ */
+function openSheet(){
+  document.getElementById('sheet').classList.add('open');
+  document.getElementById('backdrop').classList.add('show');
+  sheetOpen = true;
+}
+function closeSheet(){
+  document.getElementById('sheet').classList.remove('open');
+  document.getElementById('backdrop').classList.remove('show');
+  sheetOpen = false;
+  // Reset drag transform
+  const s = document.getElementById('sheet');
+  s.style.transition = '';
+  s.style.transform  = '';
+}
+
+document.getElementById('backdrop').addEventListener('click', closeSheet);
+
+/* ══════════════════════════════════════════════
+   DRAG-TO-DISMISS
+══════════════════════════════════════════════ */
+const dragEl = document.getElementById('sheetDrag');
+const sheetEl = document.getElementById('sheet');
+
+function dragStart(e){
+  if(!sheetOpen) return;
+  dragging = true;
+  dragY0 = e.touches ? e.touches[0].clientY : e.clientY;
+  dragDY = 0;
+  sheetEl.style.transition = 'none';
+}
+function dragMove(e){
+  if(!dragging) return;
+  dragDY = Math.max(0, (e.touches ? e.touches[0].clientY : e.clientY) - dragY0);
+  sheetEl.style.transform = `translateY(${dragDY}px)`;
+}
+function dragEnd(){
+  if(!dragging) return;
+  dragging = false;
+  sheetEl.style.transition = '';
+  sheetEl.style.transform  = '';
+  if(dragDY > 110) closeSheet();
+}
+
+dragEl.addEventListener('touchstart', dragStart, {passive:true});
+dragEl.addEventListener('touchmove',  dragMove,  {passive:true});
+dragEl.addEventListener('touchend',   dragEnd);
+
+/* ══════════════════════════════════════════════
+   MONTH NAV
+══════════════════════════════════════════════ */
+document.getElementById('prevMonth').addEventListener('click', () => {
+  viewMonth--; if(viewMonth < 0){ viewMonth=11; viewYear--; }
+  renderCal();
+});
+document.getElementById('nextMonth').addEventListener('click', () => {
+  viewMonth++; if(viewMonth > 11){ viewMonth=0; viewYear++; }
+  renderCal();
+});
+
+/* ══════════════════════════════════════════════
+   SWIPE LEFT/RIGHT on calendar for month nav
+══════════════════════════════════════════════ */
+let swX0=0, swY0=0;
+const calEl = document.getElementById('calGrid');
+calEl.addEventListener('touchstart', e => { swX0=e.touches[0].clientX; swY0=e.touches[0].clientY; }, {passive:true});
+calEl.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - swX0;
+  const dy = Math.abs(e.changedTouches[0].clientY - swY0);
+  if(Math.abs(dx)>50 && dy<40){
+    if(dx<0){ viewMonth++; if(viewMonth>11){viewMonth=0;viewYear++;} }
+    else     { viewMonth--; if(viewMonth<0){viewMonth=11;viewYear--;} }
+    renderCal();
+  }
+}, {passive:true});
+
+/* ══════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════ */
+renderCal();
+
+// Auto-open today if has lessons
+const t = todayISO();
+if(getLessons(t).length > 0){
+  setTimeout(() => onDayTap(t), 400);
+}
+</script>
+</body>
+</html>
